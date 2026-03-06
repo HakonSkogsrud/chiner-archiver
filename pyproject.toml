@@ -1,0 +1,10 @@
+[project]
+name = "chiner-archiver"
+version = "1.0.0"
+description = "Archive entire threads from Chinertown.com (SMF forum)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.28.0",
+    "beautifulsoup4>=4.12.0",
+]
