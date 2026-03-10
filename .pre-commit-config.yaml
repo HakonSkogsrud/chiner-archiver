@@ -1,0 +1,26 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-docstring-first
+      - id: check-case-conflict
+      - id: debug-statements
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.19.1'
+    hooks:
+      - id: mypy
+        args: ["--no-strict-optional", "--ignore-missing-imports", "--disallow-untyped-defs", "--disallow-incomplete-defs"]
+        additional_dependencies: ["types-requests", "types-beautifulsoup4"]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.5
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.10.9
+    hooks:
+      - id: uv-lock

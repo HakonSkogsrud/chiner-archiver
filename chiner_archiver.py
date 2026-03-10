@@ -15,10 +15,10 @@ import re
 import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import urljoin, urlparse, parse_qs, urlencode, urlunparse
+from urllib.parse import urljoin, urlparse, urlencode, urlunparse
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 # ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -165,7 +165,7 @@ def login(session: requests.Session, base_url: str) -> bool:
     }
 
     # Capture any hidden fields (e.g., session hash, sc token)
-    if login_form:
+    if isinstance(login_form, Tag):
         for hidden in login_form.find_all("input", attrs={"type": "hidden"}):
             name = hidden.get("name")
             value = hidden.get("value", "")
