@@ -672,21 +672,14 @@ def archive_thread(thread_url: str, session: requests.Session) -> None:
     print_status(f"Saving post text to {txt_filename}...")
     try:
         with open(txt_filename, "w", encoding="utf-8") as f:
-            f.write(f"Thread: {thread_title}\n")
-            f.write(f"URL: {thread_url}\n")
-            f.write(f"Archived: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"Total posts: {len(all_posts)}\n")
-            f.write("=" * 72 + "\n\n")
+            f.write(f"{thread_title}\n")
 
-            for i, post in enumerate(all_posts, start=1):
-                f.write(f"--- Post #{i} ---\n")
-                if post["author"]:
-                    f.write(f"Author: {post['author']}\n")
-                if post["date"]:
-                    f.write(f"Date: {post['date']}\n")
-                f.write("\n")
-                f.write(post["body"])
-                f.write("\n\n")
+            for i, post in enumerate(all_posts):
+                f.write("---\n")
+                author = post["author"] or "?"
+                date = post["date"] or "?"
+                body = post["body"].replace("\n", "\\n")
+                f.write(f"{author}|{date}|{body}\n")
 
         print_success(f"Saved {txt_filename}")
     except OSError as exc:
