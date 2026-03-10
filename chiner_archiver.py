@@ -15,10 +15,10 @@ import re
 import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import urljoin, urlparse, parse_qs, urlencode, urlunparse
+from urllib.parse import urljoin, urlparse, urlencode, urlunparse
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 # ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -165,7 +165,7 @@ def login(session: requests.Session, base_url: str) -> bool:
     }
 
     # Capture any hidden fields (e.g., session hash, sc token)
-    if login_form:
+    if isinstance(login_form, Tag):
         for hidden in login_form.find_all("input", attrs={"type": "hidden"}):
             name = hidden.get("name")
             value = hidden.get("value", "")
@@ -603,7 +603,9 @@ def download_image(
 # ─── Main Archiver ────────────────────────────────────────────────────────────
 
 
-def archive_thread(thread_url: str, session: requests.Session) -> None:
+def archive_thread(
+    thread_url: str, session: requests.Session, download_images: bool = True
+) -> None:
     """
     Archive a complete thread: all pages, all posts, all images.
     """
@@ -672,21 +674,14 @@ def archive_thread(thread_url: str, session: requests.Session) -> None:
     print_status(f"Saving post text to {txt_filename}...")
     try:
         with open(txt_filename, "w", encoding="utf-8") as f:
-            f.write(f"Thread: {thread_title}\n")
-            f.write(f"URL: {thread_url}\n")
-            f.write(f"Archived: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"Total posts: {len(all_posts)}\n")
-            f.write("=" * 72 + "\n\n")
+            f.write(f"{thread_title}\n")
 
-            for i, post in enumerate(all_posts, start=1):
-                f.write(f"--- Post #{i} ---\n")
-                if post["author"]:
-                    f.write(f"Author: {post['author']}\n")
-                if post["date"]:
-                    f.write(f"Date: {post['date']}\n")
-                f.write("\n")
-                f.write(post["body"])
-                f.write("\n\n")
+            for i, post in enumerate(all_posts):
+                f.write("---\n")
+                author = post["author"] or "?"
+                date = post["date"] or "?"
+                body = post["body"].replace("\n", "\\n")
+                f.write(f"{author}|{date}|{body}\n")
 
         print_success(f"Saved {txt_filename}")
     except OSError as exc:
@@ -694,7 +689,7 @@ def archive_thread(thread_url: str, session: requests.Session) -> None:
         return
 
     # ── Download images ──
-    if all_image_urls:
+    if download_images and all_image_urls:
         os.makedirs(img_dirname, exist_ok=True)
         print_status(f"Downloading {len(all_image_urls)} image(s) to {img_dirname}/...")
         downloaded = 0
@@ -713,6 +708,8 @@ def archive_thread(thread_url: str, session: requests.Session) -> None:
                 time.sleep(0.3)
 
         print_success(f"Images: {downloaded} downloaded, {failed} failed.")
+    elif not download_images:
+        print_status("Skipping image download.")
     else:
         print_status("No images to download.")
 
@@ -720,7 +717,7 @@ def archive_thread(thread_url: str, session: requests.Session) -> None:
     print()
     print_success("Archive complete!")
     print(f"  Text file : {txt_filename}")
-    if all_image_urls:
+    if download_images and all_image_urls:
         print(f"  Images dir: {img_dirname}/")
 
 
@@ -756,10 +753,11 @@ def main() -> None:
         if not login(session, base_url):
             print_error("Login failed. Attempting to continue without auth...")
 
+    download_imgs = input("  Download images? (y/N): ").strip().lower()
     print()
 
     # Archive the thread
-    archive_thread(thread_url, session)
+    archive_thread(thread_url, session, download_images=download_imgs in ("y", "yes"))
 
 
 if __name__ == "__main__":
