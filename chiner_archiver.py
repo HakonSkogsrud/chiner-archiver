@@ -603,7 +603,9 @@ def download_image(
 # ─── Main Archiver ────────────────────────────────────────────────────────────
 
 
-def archive_thread(thread_url: str, session: requests.Session) -> None:
+def archive_thread(
+    thread_url: str, session: requests.Session, download_images: bool = True
+) -> None:
     """
     Archive a complete thread: all pages, all posts, all images.
     """
@@ -687,7 +689,7 @@ def archive_thread(thread_url: str, session: requests.Session) -> None:
         return
 
     # ── Download images ──
-    if all_image_urls:
+    if download_images and all_image_urls:
         os.makedirs(img_dirname, exist_ok=True)
         print_status(f"Downloading {len(all_image_urls)} image(s) to {img_dirname}/...")
         downloaded = 0
@@ -706,6 +708,8 @@ def archive_thread(thread_url: str, session: requests.Session) -> None:
                 time.sleep(0.3)
 
         print_success(f"Images: {downloaded} downloaded, {failed} failed.")
+    elif not download_images:
+        print_status("Skipping image download.")
     else:
         print_status("No images to download.")
 
@@ -713,7 +717,7 @@ def archive_thread(thread_url: str, session: requests.Session) -> None:
     print()
     print_success("Archive complete!")
     print(f"  Text file : {txt_filename}")
-    if all_image_urls:
+    if download_images and all_image_urls:
         print(f"  Images dir: {img_dirname}/")
 
 
@@ -749,10 +753,11 @@ def main() -> None:
         if not login(session, base_url):
             print_error("Login failed. Attempting to continue without auth...")
 
+    download_imgs = input("  Download images? (y/N): ").strip().lower()
     print()
 
     # Archive the thread
-    archive_thread(thread_url, session)
+    archive_thread(thread_url, session, download_images=download_imgs in ("y", "yes"))
 
 
 if __name__ == "__main__":
